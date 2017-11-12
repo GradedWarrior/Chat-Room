@@ -1,177 +1,109 @@
 package com.GradedWarrior.chat.app;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.jar.JarException;
-
+import com.GradedWarrior.chat.ChatApp;
 import com.mrcrayfish.device.api.app.Application;
-import com.mrcrayfish.device.api.app.Component;
-import com.mrcrayfish.device.api.app.Dialog;
-import com.mrcrayfish.device.api.app.Dialog.Input;
-import com.mrcrayfish.device.api.app.Dialog.Message;
-import com.mrcrayfish.device.api.app.Dialog.OpenFile;
-import com.mrcrayfish.device.api.app.Dialog.SaveFile;
-import com.mrcrayfish.device.api.app.Layout;
-import com.mrcrayfish.device.api.app.component.Button;
-import com.mrcrayfish.device.api.app.component.Label;
-import com.mrcrayfish.device.api.app.component.TextField;
-import com.mrcrayfish.device.api.app.listener.ClickListener;
-import com.mrcrayfish.device.api.io.File;
-import com.mrcrayfish.device.api.utils.BankUtil;
-import com.mrcrayfish.device.api.utils.OnlineRequest;
+import com.mrcrayfish.device.api.app.Icon;
 import com.mrcrayfish.device.api.utils.OnlineRequest;
 import com.mrcrayfish.device.api.utils.OnlineRequest.ResponseHandler;
-import net.minecraft.nbt.NBTTagCompound;
-
-
-
-
-import java.net.*;
-import java.io.*;
-import com.google.gson.*;
 import com.mrcrayfish.device.api.app.component.*;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * Author: GradedWarrior
  */
-public class AdminApplication extends Application
-{
+public class AdminApplication extends Application {
 
-	private Text Messages;
+	private TextArea Messages;
 	private Label test;
 	private Button Send;
-	private Button Clear;
+	private ItemList<String> chat;
 	private static TextField ChatBar;
 	private static TextField User;
-	
-	
-	{
-    //private static final String USERNAME = ChatBar.getText();
+	public String oldData; 
+	public String currentData;
+	boolean urlData;
+	private int counter;
 
-	this.setDefaultWidth(300);
-	}
-	
-	
-    @Override
-    public void init()
-    {
-    
-    	
-    	
-    	
+	@Override
+	public void init() {
+		this.setDefaultHeight(130);
+		this.setDefaultWidth(250);
+		chat = new ItemList<>(5, 5, 240, 7);
 
-    	
-    	
-    	
-    	class SayHello extends TimerTask {
-    	    public void run() {
+		addComponent(chat);
+		ChatBar = new TextField(6, 112, 191);
 
-    	    	OnlineRequest.getInstance().make("http://centralos.x10host.com/chat/chat.html", new ResponseHandler() {
-    	    	    @Override
-    	    	    public void handle(boolean success, String response) {
-    
-    	    	    	
-    	    	    	Messages = new Text(response, 5, 5, 130);
-    	    	    	
-    	    			
-    	    	    	addComponent(Messages);
-    	    	    }
-    	    	});
-    	    }
-    	}
-    	
-    	
-    	ChatBar = new TextField(6, 80, 155);
-		
 		addComponent(ChatBar);
 		
-		Send = new Button(165, 80, 30, 15, "Send");
+		Button sendImage = new Button(198, 112, 16, 15, Icon.PICTURE);
+		Send = new Button(215, 112, 30, 15, "Send");
+        Send.setClickListener((arg0, arg1)->
+                OnlineRequest.getInstance().make(
+                        "http://centralos.x10host.com/chat/messageAdmin.php?username="+Minecraft.getMinecraft().player.getName()+"&message="+getFormattedStringData(ChatBar.getText()),
+                        (success, response)-> {
+                            if(currentData != null) {
+                                ChatBar.setText("");
+                            }
+                        })
+
+        );
 		addComponent(Send);
-		
-		Clear = new Button(220, 80, 70, 15, "Clear Chat");
-		addComponent(Clear);
-		
-		
-		
-		
-		
-		
-		
-		
-    	// And From your main() method or any other method
-    	Timer timer = new Timer();
-    	timer.schedule(new SayHello(), 0, 5000);
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-		Send.setClickListener(new ClickListener()
-		{
+		addComponent(sendImage);
+	}
 
-			@Override
-			public void onClick(Component arg0, int arg1) {
-			
-    	    	OnlineRequest.getInstance().make("http://centralos.x10host.com/chat/messageAdmin.php?message="+ChatBar.getText()+"", new ResponseHandler() {
-    	    	    @Override
-    	    	    public void handle(boolean success, String response) {
-    
-    	    	    	
-    	    	    	ChatBar.setText("");
-    	    			
-    	    			
-    	    	    }
-    	    	});
-				
-			}
+	
+	@Override
 
-		});
+	public void onTick() {
+        super.onTick();
 
+        counter++;
+        
+        if ((counter % 20) == 0) { //Every second (tick / 20 -> 0 remainders)
 
-		Clear.setClickListener(new ClickListener()
-		{
+            OnlineRequest.getInstance().make("http://centralos.x10host.com/chat/chat.html", new ResponseHandler() {
+                 @Override
+                public void handle(boolean success, String response) {
+   
+                    if (currentData == null) {
+                        currentData = response;
+                        oldData = currentData;
+                    }
+                   
+                    if (!currentData.equals(oldData)) {
+                     //   oldData = currentData;
+                        currentData = response;
+                        
+                        chat.addItem(currentData);
+                        ChatApp.LOGGER.info(currentData);
+                    } else {
+                        oldData = response;
+                    }
+                }
+                
+            });
 
-			@Override
-			public void onClick(Component arg0, int arg1) {
-			
-    	    	OnlineRequest.getInstance().make("http://centralos.x10host.com/chat/clear.php", new ResponseHandler() {
-    	    	    @Override
-    	    	    public void handle(boolean success, String response) {
-    
-    	    	    	
-    	    	    	
-    	    			
-    	    			
-    	    	    }
-    	    	});
-				
-			}
+        }
 
-		});		
-		
-		
-		
-		
-		
+	}
+
+	private String getFormattedStringData(String toFormat){
+	    return toFormat.replace(" ", "%20");
     }
 
-    @Override
-    public void load(NBTTagCompound nbtTagCompound)
-    {
+	@Override
+	public void load(NBTTagCompound nbtTagCompound) {
 
-    }
+	}
 
-    @Override
-    public void save(NBTTagCompound nbtTagCompound)
-    {
+	@Override
+	public void save(NBTTagCompound nbtTagCompound) {
 
-    }
+	}
 }
