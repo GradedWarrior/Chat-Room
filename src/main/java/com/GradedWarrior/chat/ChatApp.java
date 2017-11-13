@@ -1,10 +1,8 @@
 package com.GradedWarrior.chat;
 
+import com.GradedWarrior.chat.app.MineChatApplication;
 import com.mrcrayfish.device.api.ApplicationManager;
-import com.GradedWarrior.chat.app.AdminApplication;
-import com.GradedWarrior.chat.app.ChatRApplication;
 
-import net.minecraft.init.Blocks;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -24,10 +22,6 @@ public class ChatApp
     @EventHandler
     public void init(FMLInitializationEvent event)
     {
-
-
-    	ApplicationManager.registerApplication(new ResourceLocation("gca:admin"), AdminApplication.class);
-    	ApplicationManager.registerApplication(new ResourceLocation("gca:minechat"), ChatRApplication.class);
-
+        ApplicationManager.registerApplication(new ResourceLocation("gca:minechat"), MineChatApplication.class);
     }
 }
